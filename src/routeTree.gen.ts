@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HostCodeRouteImport } from './routes/host.$code'
 import { Route as PlayCodeRouteImport } from './routes/play.$code'
+import { Route as SorularIndexRouteImport } from './routes/sorular.index'
 import { Route as SorularSetIdRouteImport } from './routes/sorular.$setId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +30,11 @@ const PlayCodeRoute = PlayCodeRouteImport.update({
   path: '/play/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SorularIndexRoute = SorularIndexRouteImport.update({
+  id: '/sorular/',
+  path: '/sorular/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SorularSetIdRoute = SorularSetIdRouteImport.update({
   id: '/sorular/$setId',
   path: '/sorular/$setId',
@@ -40,12 +46,14 @@ export interface FileRoutesByFullPath {
   '/host/$code': typeof HostCodeRoute
   '/play/$code': typeof PlayCodeRoute
   '/sorular/$setId': typeof SorularSetIdRoute
+  '/sorular/': typeof SorularIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/host/$code': typeof HostCodeRoute
   '/play/$code': typeof PlayCodeRoute
   '/sorular/$setId': typeof SorularSetIdRoute
+  '/sorular': typeof SorularIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,21 @@ export interface FileRoutesById {
   '/host/$code': typeof HostCodeRoute
   '/play/$code': typeof PlayCodeRoute
   '/sorular/$setId': typeof SorularSetIdRoute
+  '/sorular/': typeof SorularIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/host/$code' | '/play/$code' | '/sorular/$setId'
+  fullPaths:
+    '/' | '/host/$code' | '/play/$code' | '/sorular/$setId' | '/sorular/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/host/$code' | '/play/$code' | '/sorular/$setId'
-  id: '__root__' | '/' | '/host/$code' | '/play/$code' | '/sorular/$setId'
+  to: '/' | '/host/$code' | '/play/$code' | '/sorular/$setId' | '/sorular'
+  id:
+    | '__root__'
+    | '/'
+    | '/host/$code'
+    | '/play/$code'
+    | '/sorular/$setId'
+    | '/sorular/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +83,7 @@ export interface RootRouteChildren {
   HostCodeRoute: typeof HostCodeRoute
   PlayCodeRoute: typeof PlayCodeRoute
   SorularSetIdRoute: typeof SorularSetIdRoute
+  SorularIndexRoute: typeof SorularIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -92,6 +109,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlayCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sorular/': {
+      id: '/sorular/'
+      path: '/sorular'
+      fullPath: '/sorular/'
+      preLoaderRoute: typeof SorularIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sorular/$setId': {
       id: '/sorular/$setId'
       path: '/sorular/$setId'
@@ -107,6 +131,7 @@ const rootRouteChildren: RootRouteChildren = {
   HostCodeRoute: HostCodeRoute,
   PlayCodeRoute: PlayCodeRoute,
   SorularSetIdRoute: SorularSetIdRoute,
+  SorularIndexRoute: SorularIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
