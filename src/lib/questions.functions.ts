@@ -150,18 +150,29 @@ function validate(d: QuestionInput) {
 }
 
 export const addQuestion = createServerFn({ method: "POST" })
-  .inputValidator((data: QuestionInput & { setId: string }) => ({
+  .inputValidator((data: QuestionInput & { setId?: string }) => ({
     ...clean(data),
-    setId: String(data.setId),
+    setId: data.setId ? String(data.setId) : undefined,
   }))
   .handler(async ({ data }) => {
     const { setId, ...fields } = data;
     validate(fields);
     const supabase = await db();
-    const { error } = await supabase.from("questions").insert({ ...fields, set_id: setId });
+    let targetSetId = setId ?? null;
+    if (!targetSetId) {
+      const { data: firstSet } = await supabase
+        .from("question_sets")
+        .select("id")
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      targetSetId = firstSet?.id ?? null;
+    }
+    const { error } = await supabase.from("questions").insert({ ...fields, set_id: targetSetId });
     if (error) throw new Error("Soru kaydedilemedi");
     return { ok: true };
   });
+
 
 export const updateQuestion = createServerFn({ method: "POST" })
   .inputValidator((data: QuestionInput & { id: string }) => ({
