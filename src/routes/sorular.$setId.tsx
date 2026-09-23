@@ -6,25 +6,24 @@ import { createRoom } from "@/lib/game.functions";
 import {
   addQuestion,
   deleteQuestion,
+  getSet,
   listQuestions,
   updateQuestion,
   type QuestionRow,
 } from "@/lib/questions.functions";
 
-export const Route = createFileRoute("/sorular")({
+export const Route = createFileRoute("/sorular/$setId")({
   head: () => ({
     meta: [
-      { title: "Soru Hazırla — Halat Yarışı" },
+      { title: "Soru Seti Düzenle — Halat Yarışı" },
       {
         name: "description",
-        content:
-          "Halat çekme yarışması için kendi Türkçe sorularını ekle, düzenle veya sil. Hazır olduğunda yarışmayı başlat.",
+        content: "Soru setine istediğin kadar soru ekle, düzenle veya sil; sonra bu seti sun.",
       },
-      { property: "og:title", content: "Soru Hazırla — Halat Yarışı" },
-      {
-        property: "og:description",
-        content: "Sınıf yarışması için soru havuzunu hazırla, sonra yarışmayı başlat.",
-      },
+      { property: "og:title", content: "Soru Seti Düzenle — Halat Yarışı" },
+      { property: "og:description", content: "Soru setini hazırla ve yarışmada sun." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: QuestionsPage,
@@ -44,14 +43,23 @@ const empty = {
 };
 
 function QuestionsPage() {
+  const { setId } = Route.useParams();
   const navigate = useNavigate();
   const fetchAll = useServerFn(listQuestions);
+  const fetchSet = useServerFn(getSet);
   const add = useServerFn(addQuestion);
   const edit = useServerFn(updateQuestion);
   const remove = useServerFn(deleteQuestion);
   const create = useServerFn(createRoom);
 
-  const list = useQuery<QuestionRow[]>({ queryKey: ["questions"], queryFn: () => fetchAll() });
+  const setInfo = useQuery({
+    queryKey: ["set", setId],
+    queryFn: () => fetchSet({ data: { id: setId } }),
+  });
+  const list = useQuery<QuestionRow[]>({
+    queryKey: ["questions", setId],
+    queryFn: () => fetchAll({ data: { setId } }),
+  });
 
   const [form, setForm] = useState({ ...empty });
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -66,7 +74,7 @@ function QuestionsPage() {
     setError(null);
     try {
       if (editingId) await edit({ data: { ...form, id: editingId } });
-      else await add({ data: form });
+      else await add({ data: { ...form, setId } });
       setForm({ ...empty });
       setEditingId(null);
       await list.refetch();
@@ -80,7 +88,7 @@ function QuestionsPage() {
     setStarting(true);
     setError(null);
     try {
-      const res = await create();
+      const res = await create({ data: { setId } });
       void navigate({ to: "/host/$code", params: { code: res.code } });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Yarışma başlatılamadı");
@@ -96,28 +104,28 @@ function QuestionsPage() {
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-semibold tracking-[0.35em] text-muted-foreground">
-              1. ADIM — SORU HAVUZU
+              SORU SETİ
             </p>
             <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-foreground">
-              SORULARI HAZIRLA
+              {setInfo.data?.title ?? "..."}
             </h1>
             <p className="mt-2 text-sm font-semibold text-muted-foreground">
-              Havuzda {total} soru var. Yarışmada bunlardan rastgele 10 tanesi sorulur.
+              Bu sette {total} soru var. Sunduğunda hepsi sırayla sorulur.
             </p>
           </div>
           <div className="flex gap-2">
             <Link
-              to="/"
+              to="/sorular"
               className="rounded-xl border-2 border-border bg-panel px-4 py-3 text-sm font-bold text-foreground hover:bg-muted"
             >
-              ANA SAYFA
+              SETLERE DÖN
             </Link>
             <button
               onClick={startContest}
               disabled={starting || total === 0}
               className="rounded-xl bg-foreground px-5 py-3 text-sm font-bold text-background disabled:opacity-40"
             >
-              {starting ? "HAZIRLANIYOR..." : "YARIŞMAYA GEÇ"}
+              {starting ? "HAZIRLANIYOR..." : "BU SETİ SUN"}
             </button>
           </div>
         </header>

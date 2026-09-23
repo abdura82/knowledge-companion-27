@@ -62,18 +62,36 @@ async function loadRoom(code: string) {
   return data;
 }
 
-export const createRoom = createServerFn({ method: "POST" }).handler(async () => {
+export const createRoom = createServerFn({ method: "POST" })
+  .inputValidator((data?: { setId?: string }) => ({
+    setId: data?.setId ? String(data.setId) : undefined,
+  }))
+  .handler(async ({ data: input }) => {
   const supabase = await db();
-  const { data: questions, error: qErr } = await supabase.from("questions").select("id");
-  if (qErr) throw new Error(qErr.message);
-  const shuffled = (questions ?? []).map((q) => q.id).sort(() => Math.random() - 0.5);
-  const questionIds = shuffled.slice(0, QUESTION_COUNT);
+  let questionIds: string[];
+  if (input.setId) {
+    const { data: qs, error } = await supabase
+      .from("questions")
+      .select("id")
+      .eq("set_id", input.setId)
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    questionIds = (qs ?? []).map((q) => q.id);
+    if (!questionIds.length) throw new Error("Bu sette hiç soru yok");
+  } else {
+    const { data: questions, error: qErr } = await supabase.from("questions").select("id");
+    if (qErr) throw new Error(qErr.message);
+    questionIds = (questions ?? [])
+      .map((q) => q.id)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, QUESTION_COUNT);
+  }
 
   for (let attempt = 0; attempt < 6; attempt++) {
     const code = makeCode();
     const { data, error } = await supabase
       .from("rooms")
-      .insert({ room_code: code, question_ids: questionIds })
+      .insert({ room_code: code, question_ids: questionIds, set_id: input.setId ?? null })
       .select("room_code")
       .maybeSingle();
     if (!error && data) return { code: data.room_code };

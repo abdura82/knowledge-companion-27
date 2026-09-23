@@ -24,22 +24,9 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const navigate = useNavigate();
-  const create = useServerFn(createRoom);
-  const [loading, setLoading] = useState(false);
   const [code, setCode] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const error: string | null = null;
 
-  const handleCreate = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await create();
-      void navigate({ to: "/host/$code", params: { code: res.code } });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Bir hata oluştu");
-      setLoading(false);
-    }
-  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background px-5 py-12">
@@ -58,19 +45,11 @@ function Home() {
           to="/sorular"
           className="mt-10 block w-full rounded-2xl bg-foreground px-8 py-5 text-lg font-bold tracking-wide text-background transition-transform hover:scale-[1.01]"
         >
-          1. SORULARI HAZIRLA
+          SORU SETLERİM
         </Link>
         <p className="mt-2 text-xs font-semibold text-muted-foreground">
-          Önce soru havuzunu oluştur, sonra yarışmaya geç.
+          Set oluştur, soruları ekle, sonra istediğin seti seçip sun.
         </p>
-
-        <button
-          onClick={handleCreate}
-          disabled={loading}
-          className="mt-4 w-full rounded-2xl border-2 border-border bg-panel px-8 py-4 text-base font-bold tracking-wide text-foreground transition-colors hover:bg-muted disabled:opacity-60"
-        >
-          {loading ? "OLUŞTURULUYOR..." : "2. YARIŞMAYI BAŞLAT"}
-        </button>
 
         <div className="mt-8 border-t border-border pt-6">
           <p className="text-sm font-semibold text-muted-foreground">
