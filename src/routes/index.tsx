@@ -24,22 +24,9 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const navigate = useNavigate();
-  const create = useServerFn(createRoom);
-  const [loading, setLoading] = useState(false);
   const [code, setCode] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const error: string | null = null;
 
-  const handleCreate = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await create();
-      void navigate({ to: "/host/$code", params: { code: res.code } });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Bir hata oluştu");
-      setLoading(false);
-    }
-  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background px-5 py-12">
