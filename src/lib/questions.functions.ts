@@ -82,6 +82,13 @@ export const deleteSet = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => ({ id: String(data.id) }))
   .handler(async ({ data }) => {
     const supabase = await db();
+    const { data: qs } = await supabase.from("questions").select("id").eq("set_id", data.id);
+    const ids = (qs ?? []).map((q) => q.id);
+    if (ids.length) {
+      await supabase.from("answers").delete().in("question_id", ids);
+      await supabase.from("questions").delete().in("id", ids);
+    }
+    await supabase.from("rooms").update({ set_id: null }).eq("set_id", data.id);
     const { error } = await supabase.from("question_sets").delete().eq("id", data.id);
     if (error) throw new Error("Set silinemedi");
     return { ok: true };
